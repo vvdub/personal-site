@@ -27,7 +27,6 @@ function Intro({ onComplete }: { onComplete: () => void }) {
   const [scanOffset, setScanOffset] = useState(0)
   const [glitchBars, setGlitchBars] = useState<Array<{ id: number; y: number; width: number; delay: number }>>([])
 
-  // Phase progression: 0=black, 1=scan lines, 2=code rain, 3=bpm buildup, 4=flash+exit
   useEffect(() => {
     const timers = [
       setTimeout(() => setPhase(1), 300),
@@ -39,7 +38,6 @@ function Intro({ onComplete }: { onComplete: () => void }) {
     return () => timers.forEach(clearTimeout)
   }, [onComplete])
 
-  // Scan line movement
   useEffect(() => {
     if (phase < 1) return
     const interval = setInterval(() => {
@@ -48,7 +46,6 @@ function Intro({ onComplete }: { onComplete: () => void }) {
     return () => clearInterval(interval)
   }, [phase])
 
-  // Code fragment spawner
   useEffect(() => {
     if (phase < 2) return
     let id = 0
@@ -65,7 +62,6 @@ function Intro({ onComplete }: { onComplete: () => void }) {
     return () => clearInterval(interval)
   }, [phase])
 
-  // BPM acceleration
   useEffect(() => {
     if (phase < 3) return
     const interval = setInterval(() => {
@@ -74,7 +70,6 @@ function Intro({ onComplete }: { onComplete: () => void }) {
     return () => clearInterval(interval)
   }, [phase])
 
-  // Glitch bars
   useEffect(() => {
     if (phase < 2) return
     let id = 0
@@ -89,12 +84,10 @@ function Intro({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div className={`intro ${phase >= 4 ? 'intro--flash' : ''}`} onClick={onComplete}>
-      {/* Scan lines */}
       {phase >= 1 && (
         <div className="intro-scanlines" style={{ backgroundPositionY: `${scanOffset}px` }} />
       )}
 
-      {/* Glitch bars */}
       {phase >= 2 && glitchBars.map(bar => (
         <div
           key={bar.id}
@@ -107,7 +100,6 @@ function Intro({ onComplete }: { onComplete: () => void }) {
         />
       ))}
 
-      {/* Code fragments */}
       {phase >= 2 && fragments.map(f => (
         <span
           key={f.id}
@@ -122,7 +114,6 @@ function Intro({ onComplete }: { onComplete: () => void }) {
         </span>
       ))}
 
-      {/* BPM counter */}
       {phase >= 3 && (
         <div className="intro-bpm">
           <span className="intro-bpm-num">{bpm}</span>
@@ -130,14 +121,22 @@ function Intro({ onComplete }: { onComplete: () => void }) {
         </div>
       )}
 
-      {/* Center kick pulse */}
       {phase >= 3 && <div className="intro-pulse" />}
 
-      {/* Skip hint */}
       {phase >= 1 && phase < 4 && (
         <div className="intro-skip">click to skip</div>
       )}
     </div>
+  )
+}
+
+function BracketLogo() {
+  return (
+    <svg className="topline-logo" viewBox="0 0 64 64" width="28" height="28" aria-label="DP logo">
+      <path d="M14 14 L24 14 L24 20 L20 20 L20 44 L24 44 L24 50 L14 50 Z" fill="currentColor"/>
+      <path d="M50 14 L40 14 L40 20 L44 20 L44 44 L40 44 L40 50 L50 50 Z" fill="currentColor"/>
+      <rect x="29" y="29" width="6" height="6" fill="currentColor"/>
+    </svg>
   )
 }
 
@@ -147,7 +146,6 @@ function App() {
 
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false)
-    // Small delay before revealing site for the hard cut effect
     requestAnimationFrame(() => setSiteVisible(true))
   }, [])
 
@@ -159,11 +157,13 @@ function App() {
         <div className="grain" />
 
         <header className="topline">
+          <BracketLogo />
+          <span className="topline-label">Dusten Peterson</span>
         </header>
 
         <main className="content">
           <div className="name-block">
-            <h1 className="name">
+            <h1 className="name" data-text="Dusten Peterson">
               <span className="name-line">Dusten</span>
               <span className="name-line">Peterson</span>
             </h1>

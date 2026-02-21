@@ -210,6 +210,15 @@
   border-bottom: 1px solid #0a0a0a;
 }
 
+.topline-logo {
+  color: #0a0a0a;
+  transition: transform 0.2s ease;
+}
+
+.topline-logo:hover {
+  transform: scale(1.1);
+}
+
 .topline-label {
   font-family: 'Space Mono', monospace;
   font-size: 0.75rem;
@@ -239,6 +248,17 @@
   letter-spacing: -0.02em;
   font-size: clamp(5rem, 18vw, 16rem);
   color: #0a0a0a;
+  position: relative;
+  cursor: default;
+}
+
+/* Hover on name — offset second line like misregistered print */
+.name-line {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.name:hover .name-line:nth-child(2) {
+  transform: translateX(0.06em);
 }
 
 .page--visible .name-line {
