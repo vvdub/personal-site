@@ -293,20 +293,18 @@ function GlitchName({ intensity }: { intensity: number }) {
   const [glitchedFirst, setGlitchedFirst] = useState('DUSTEN')
   const [glitchedLast, setGlitchedLast] = useState('PETERSON')
   const [sliceOffset, setSliceOffset] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval>>(null)
+  const intensityRef = useRef(intensity)
+  intensityRef.current = intensity
 
   useEffect(() => {
-    if (intensity < 0.05) return
-
     const baseFirst = 'DUSTEN'
     const baseLast = 'PETERSON'
 
-    // Glitch faster and harder as intensity rises
-    const freq = Math.max(16, 80 - intensity * 65)
+    const interval = setInterval(() => {
+      const t = intensityRef.current
+      if (t < 0.05 || t < 0) return
 
-    intervalRef.current = setInterval(() => {
-      // Much more aggressive corruption curve
-      const corruptionChance = Math.min(intensity * intensity * 1.2, 0.85)
+      const corruptionChance = Math.min(t * t * 1.2, 0.85)
 
       const corrupt = (str: string) =>
         str
@@ -321,16 +319,15 @@ function GlitchName({ intensity }: { intensity: number }) {
       setGlitchedFirst(corrupt(baseFirst))
       setGlitchedLast(corrupt(baseLast))
 
-      // Random horizontal slice displacement
-      if (intensity > 0.2 && Math.random() < intensity * 0.7) {
-        setSliceOffset((Math.random() - 0.5) * intensity * 60)
+      if (t > 0.2 && Math.random() < t * 0.7) {
+        setSliceOffset((Math.random() - 0.5) * t * 60)
       } else {
         setSliceOffset(0)
       }
-    }, freq)
+    }, 30)
 
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [intensity])
+    return () => clearInterval(interval)
+  }, [])
 
   // Much bigger chromatic split
   const chromX = intensity * 18
