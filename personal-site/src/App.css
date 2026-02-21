@@ -2,6 +2,176 @@
    Berlin Brutalist — Dusten Peterson
    ------------------------------------------------ */
 
+/* ================================================
+   INTRO SEQUENCE
+   ================================================ */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+/* Fade to site background on exit */
+.intro--flash {
+  animation: flash-out 0.6s ease forwards;
+}
+
+@keyframes flash-out {
+  0% { background: #000; opacity: 1; }
+  100% { background: #000; opacity: 0; pointer-events: none; }
+}
+
+/* CRT scan lines */
+.intro-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(255, 255, 255, 0.03) 2px,
+    rgba(255, 255, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Horizontal glitch bars */
+.intro-glitch-bar {
+  position: absolute;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  z-index: 5;
+  animation: glitch-bar-flash 0.15s ease forwards;
+}
+
+@keyframes glitch-bar-flash {
+  0% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.3); }
+}
+
+/* Code fragments floating */
+.intro-code {
+  position: absolute;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(0.6rem, 1.2vw, 0.85rem);
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+  animation: code-appear 0.6s ease forwards;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+@keyframes code-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+    filter: blur(2px);
+  }
+  20% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(5px);
+  }
+}
+
+/* BPM counter */
+.intro-bpm {
+  position: absolute;
+  bottom: 15%;
+  right: 10%;
+  z-index: 20;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  animation: bpm-in 0.2s ease both;
+}
+
+.intro-bpm-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4rem, 12vw, 10rem);
+  color: #fff;
+  line-height: 1;
+  animation: bpm-throb 0.12s ease infinite alternate;
+}
+
+.intro-bpm-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+@keyframes bpm-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bpm-throb {
+  from { opacity: 0.7; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Center kick pulse ring */
+.intro-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  z-index: 15;
+  animation: kick-pulse 0.25s ease-out infinite;
+}
+
+@keyframes kick-pulse {
+  0% {
+    width: 40px;
+    height: 40px;
+    opacity: 0.8;
+    border-width: 2px;
+  }
+  100% {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Skip hint */
+.intro-skip {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  z-index: 20;
+  animation: fade-in 1s ease 1s both;
+}
+
+/* ================================================
+   MAIN SITE
+   ================================================ */
+
 .page {
   position: relative;
   min-height: 100vh;
@@ -11,6 +181,11 @@
   padding: 2rem 3rem;
   max-width: 1400px;
   margin: 0 auto;
+  opacity: 0;
+}
+
+.page--visible {
+  opacity: 1;
 }
 
 /* subtle paper grain overlay */
@@ -66,13 +241,17 @@
   color: #0a0a0a;
 }
 
-.name-line {
+.page--visible .name-line {
   display: block;
   animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.name-line:nth-child(2) {
+.page--visible .name-line:nth-child(2) {
   animation-delay: 0.1s;
+}
+
+.name-line {
+  display: block;
 }
 
 @keyframes slide-up {
@@ -93,6 +272,9 @@
   height: 2px;
   background: #0a0a0a;
   margin: 2.5rem 0 2rem;
+}
+
+.page--visible .rule {
   animation: grow-width 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
 }
 
@@ -104,6 +286,10 @@
 /* role */
 
 .meta {
+  opacity: 0;
+}
+
+.page--visible .meta {
   animation: fade-in 0.6s ease 0.6s both;
 }
 
@@ -122,6 +308,10 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  opacity: 0;
+}
+
+.page--visible .links {
   animation: fade-in 0.6s ease 0.8s both;
 }
 
@@ -193,6 +383,11 @@
 
   .links {
     margin-top: 2rem;
+  }
+
+  .intro-bpm {
+    right: 5%;
+    bottom: 20%;
   }
 }
 
