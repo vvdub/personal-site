@@ -1,0 +1,23 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  background-color: #f0ece4;
+  color: #0a0a0a;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #0a0a0a;
+  color: #f0ece4;
+}
