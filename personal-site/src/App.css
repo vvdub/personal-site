@@ -174,7 +174,8 @@
 
 .page {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -182,6 +183,7 @@
   max-width: 1400px;
   margin: 0 auto;
   opacity: 0;
+  overflow: hidden;
 }
 
 .page--visible {
@@ -394,15 +396,31 @@
 
 @media (max-width: 768px) {
   .page {
-    padding: 1.5rem;
+    padding: 1.25rem;
+  }
+
+  .topline {
+    padding-bottom: 1rem;
   }
 
   .content {
-    padding: 3rem 0;
+    padding: 1.5rem 0;
+  }
+
+  .name {
+    font-size: clamp(3.5rem, 14vw, 8rem);
+  }
+
+  .rule {
+    margin: 1.5rem 0 1rem;
   }
 
   .links {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  .bottomline {
+    padding-top: 1rem;
   }
 
   .intro-bpm {
@@ -412,20 +430,16 @@
 }
 
 @media (max-width: 480px) {
-  .page {
-    padding: 1.25rem;
-  }
-
-  .content {
-    padding: 2rem 0;
+  .name {
+    font-size: clamp(2.75rem, 13vw, 5rem);
   }
 
   .rule {
-    margin: 1.5rem 0;
+    margin: 1rem 0;
   }
 
   .links {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
     gap: 0.5rem;
   }
 
