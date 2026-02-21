@@ -157,8 +157,8 @@
 .intro-skip {
   position: absolute;
   bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
+  text-align: center;
   font-family: 'Space Mono', monospace;
   font-size: 0.65rem;
   color: rgba(255, 255, 255, 0.25);
@@ -400,11 +400,11 @@
   }
 
   .topline {
-    padding-bottom: 1rem;
+    padding-bottom: 0.75rem;
   }
 
   .content {
-    padding: 1.5rem 0;
+    padding: 0;
   }
 
   .name {
@@ -412,15 +412,15 @@
   }
 
   .rule {
-    margin: 1.5rem 0 1rem;
+    margin: 1rem 0 0.75rem;
   }
 
   .links {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
   }
 
   .bottomline {
-    padding-top: 1rem;
+    padding-top: 0.75rem;
   }
 
   .intro-bpm {
@@ -435,11 +435,11 @@
   }
 
   .rule {
-    margin: 1rem 0;
+    margin: 0.75rem 0;
   }
 
   .links {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
     gap: 0.5rem;
   }
 

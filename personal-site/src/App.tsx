@@ -158,7 +158,7 @@ function App() {
 
         <header className="topline">
           <BracketLogo />
-          <span className="topline-label">Dusten Peterson</span>
+          <span className="topline-label">01000100 01010000</span>
         </header>
 
         <main className="content">

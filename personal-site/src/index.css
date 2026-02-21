@@ -11,10 +11,11 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background-color: #e8e4dc;
   color: #0a0a0a;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 ::selection {
