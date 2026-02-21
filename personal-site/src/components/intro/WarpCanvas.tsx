@@ -174,13 +174,15 @@ export function WarpCanvas({ intensity }: { intensity: number }) {
 
           if (codeAlpha < 0.02) continue
 
-          const corruptChance = 0.08 + t * t * 0.5
-          const displayText = p.text
-            .split('')
-            .map(ch => Math.random() < corruptChance
-              ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]
-              : ch)
-            .join('')
+          const corruptChance = t < 0.05 ? 0 : Math.min(t * t * 1.2, 0.85)
+          const displayText = corruptChance === 0
+            ? p.text
+            : p.text
+              .split('')
+              .map(ch => Math.random() < corruptChance
+                ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]
+                : ch)
+              .join('')
 
           const jitter = t > 0.3 ? (Math.sin(now * 0.05 + p.z) > 0.7 ? (Math.random() - 0.5) * t * 12 : 0) : 0
           const drawX = sx + jitter
