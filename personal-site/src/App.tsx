@@ -24,7 +24,7 @@ const CODE_FRAGMENTS = [
 ]
 
 /* glitch alphabet — techno/terminal aesthetic */
-const GLITCH_CHARS = '01!@#$_-=|;:<>/~\u2588\u2593\u2592\u2591\u25A0\u25B6\u00BB\u00AB'
+const GLITCH_CHARS = '01!@#$_-=|;:<>/~[]{}()&%^*+\\?.'
 
 /* ────────────────────────────────────────────
    STAR WARP + CODE WARP — unified canvas
