@@ -1,9 +1,5 @@
-/* ------------------------------------------------
-   Berlin Brutalist — Dusten Peterson
-   ------------------------------------------------ */
-
 /* ================================================
-   INTRO SEQUENCE
+   UNIFIED INTRO — all layers sync to intensity
    ================================================ */
 
 .intro {
@@ -13,92 +9,156 @@
   z-index: 9999;
   overflow: hidden;
   cursor: pointer;
+  will-change: transform;
 }
 
-/* Fade to site background on exit */
+/* ---- Flash-out: white explosion → fade ---- */
 .intro--flash {
-  animation: flash-out 0.6s ease forwards;
+  animation: flash-explode 0.6s ease-out forwards;
 }
 
-@keyframes flash-out {
-  0% { background: #000; opacity: 1; }
-  100% { background: #000; opacity: 0; pointer-events: none; }
+@keyframes flash-explode {
+  0% {
+    background: #000;
+    filter: brightness(1);
+  }
+  15% {
+    background: #fff;
+    filter: brightness(3);
+  }
+  40% {
+    background: #fff;
+    filter: brightness(2);
+  }
+  100% {
+    background: #e8e4dc;
+    filter: brightness(1);
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
-/* CRT scan lines */
+/* ---- Star warp canvas ---- */
+.warp-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ---- Scanlines — CRT overlay ---- */
 .intro-scanlines {
   position: absolute;
   inset: 0;
+  z-index: 10;
+  pointer-events: none;
   background: repeating-linear-gradient(
     to bottom,
     transparent 0px,
     transparent 2px,
-    rgba(255, 255, 255, 0.03) 2px,
-    rgba(255, 255, 255, 0.03) 4px
+    rgba(255, 255, 255, 0.04) 2px,
+    rgba(255, 255, 255, 0.04) 4px
   );
-  pointer-events: none;
-  z-index: 10;
+  mix-blend-mode: overlay;
 }
 
-/* Horizontal glitch bars */
-.intro-glitch-bar {
+/* ---- Noise texture overlay ---- */
+.intro-noise {
   position: absolute;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.15);
-  z-index: 5;
-  animation: glitch-bar-flash 0.15s ease forwards;
-}
-
-@keyframes glitch-bar-flash {
-  0% { opacity: 1; transform: scaleX(1); }
-  100% { opacity: 0; transform: scaleX(0.3); }
-}
-
-/* Code fragments floating */
-.intro-code {
-  position: absolute;
-  font-family: 'Space Mono', monospace;
-  font-size: clamp(0.6rem, 1.2vw, 0.85rem);
-  color: rgba(255, 255, 255, 0.8);
-  white-space: nowrap;
+  inset: 0;
+  z-index: 11;
   pointer-events: none;
-  z-index: 3;
-  animation: code-appear 0.6s ease forwards;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
 }
 
-@keyframes code-appear {
+/* ---- Glitch bars — horizontal noise bands ---- */
+.glitch-bar {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.25);
+  z-index: 6;
+  pointer-events: none;
+  animation: glitch-bar-life 0.2s ease-out forwards;
+  mix-blend-mode: screen;
+}
+
+@keyframes glitch-bar-life {
   0% {
-    opacity: 0;
-    transform: translateX(-10px);
-    filter: blur(2px);
-  }
-  20% {
     opacity: 1;
-    filter: blur(0);
+    transform: scaleX(1) translateX(0);
   }
-  80% {
-    opacity: 1;
+  50% {
+    transform: scaleX(1.1) translateX(2px);
   }
   100% {
     opacity: 0;
-    transform: translateX(5px);
+    transform: scaleX(0.2) translateX(-10px);
   }
 }
 
-/* BPM counter */
-.intro-bpm {
+/* ---- Glitch name — center hero text ---- */
+.glitch-name-wrap {
   position: absolute;
-  bottom: 15%;
-  right: 10%;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.glitch-name {
+  position: absolute;
+  text-align: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(5rem, 18vw, 16rem);
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  will-change: transform;
+}
+
+.glitch-name-line {
+  display: block;
+  will-change: transform;
+  transition: none;
+}
+
+.glitch-name--main {
+  color: #fff;
+  text-shadow:
+    0 0 30px rgba(255, 255, 255, 0.5),
+    0 0 80px rgba(255, 255, 255, 0.2),
+    0 0 120px rgba(255, 255, 255, 0.05);
+}
+
+.glitch-name--red {
+  color: #ff2020;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.glitch-name--blue {
+  color: #2060ff;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+/* ---- BPM counter ---- */
+.bpm-counter {
+  position: absolute;
+  bottom: 14%;
+  right: 8%;
   z-index: 20;
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  animation: bpm-in 0.2s ease both;
+  animation: bpm-enter 0.3s ease both;
+  will-change: transform;
 }
 
-.intro-bpm-num {
+.bpm-num {
   font-family: 'Bebas Neue', sans-serif;
   font-size: clamp(4rem, 12vw, 10rem);
   color: #fff;
@@ -106,70 +166,42 @@
   animation: bpm-throb 0.12s ease infinite alternate;
 }
 
-.intro-bpm-label {
+.bpm-label {
   font-family: 'Space Mono', monospace;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.35);
   text-transform: uppercase;
   letter-spacing: 0.2em;
 }
 
-@keyframes bpm-in {
-  from { opacity: 0; transform: scale(0.8); }
+@keyframes bpm-enter {
+  from { opacity: 0; transform: scale(0.7); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes bpm-throb {
-  from { opacity: 0.7; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0.65; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1.02); }
 }
 
-/* Center kick pulse ring */
-.intro-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 40px;
-  height: 40px;
-  transform: translate(-50%, -50%);
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  z-index: 15;
-  animation: kick-pulse 0.25s ease-out infinite;
-}
-
-@keyframes kick-pulse {
-  0% {
-    width: 40px;
-    height: 40px;
-    opacity: 0.8;
-    border-width: 2px;
-  }
-  100% {
-    width: 300px;
-    height: 300px;
-    opacity: 0;
-    border-width: 1px;
-  }
-}
-
-/* Skip hint */
+/* ---- Skip hint ---- */
 .intro-skip {
   position: absolute;
-  bottom: 2rem;
+  bottom: 1.5rem;
   width: 100%;
   text-align: center;
   font-family: 'Space Mono', monospace;
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.2);
   text-transform: uppercase;
-  letter-spacing: 0.3em;
-  z-index: 20;
-  animation: fade-in 1s ease 1s both;
+  letter-spacing: 0.35em;
+  z-index: 25;
+  animation: fade-in 1.2s ease 0.8s both;
 }
 
+
 /* ================================================
-   MAIN SITE
+   MAIN SITE (unchanged)
    ================================================ */
 
 .page {
@@ -423,9 +455,13 @@
     padding-top: 0.75rem;
   }
 
-  .intro-bpm {
+  .bpm-counter {
     right: 5%;
     bottom: 20%;
+  }
+
+  .glitch-name {
+    font-size: clamp(3.5rem, 14vw, 8rem);
   }
 }
 
@@ -445,5 +481,9 @@
 
   .links a {
     font-size: 0.75rem;
+  }
+
+  .glitch-name {
+    font-size: clamp(3rem, 13vw, 5rem);
   }
 }

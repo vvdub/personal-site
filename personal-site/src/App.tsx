@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import './App.css'
 
+/* ────────────────────────────────────────────
+   CODE FRAGMENTS — fly through the warp field
+   ──────────────────────────────────────────── */
 const CODE_FRAGMENTS = [
   'const build = () => ship();',
   'while (true) { create(); }',
@@ -20,122 +23,556 @@ const CODE_FRAGMENTS = [
   '{ "status": "live" }',
 ]
 
-function Intro({ onComplete }: { onComplete: () => void }) {
-  const [phase, setPhase] = useState(0)
-  const [bpm, setBpm] = useState(128)
-  const [fragments, setFragments] = useState<Array<{ id: number; text: string; x: number; y: number; opacity: number }>>([])
-  const [scanOffset, setScanOffset] = useState(0)
-  const [glitchBars, setGlitchBars] = useState<Array<{ id: number; y: number; width: number; delay: number }>>([])
+/* glitch alphabet for character corruption */
+const GLITCH_CHARS = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`01'
+
+/* ────────────────────────────────────────────
+   STAR WARP + CODE WARP — unified canvas
+   All visual intensity is driven by one value
+   ──────────────────────────────────────────── */
+
+interface Star {
+  x: number; y: number; z: number
+  size: number; alpha: number
+  trail: Array<{ sx: number; sy: number }>
+}
+
+interface CodeParticle {
+  x: number; y: number; z: number
+  text: string; alpha: number
+}
+
+function WarpCanvas({ intensity }: { intensity: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animRef = useRef<number>(0)
+  const intensityRef = useRef(intensity)
+  intensityRef.current = intensity
 
   useEffect(() => {
-    const timers = [
-      setTimeout(() => setPhase(1), 300),
-      setTimeout(() => setPhase(2), 800),
-      setTimeout(() => setPhase(3), 2000),
-      setTimeout(() => setPhase(4), 3800),
-      setTimeout(() => onComplete(), 4200),
-    ]
-    return () => timers.forEach(clearTimeout)
-  }, [onComplete])
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-  useEffect(() => {
-    if (phase < 1) return
-    const interval = setInterval(() => {
-      setScanOffset(prev => (prev + 2) % 100)
-    }, 16)
-    return () => clearInterval(interval)
-  }, [phase])
+    const dpr = window.devicePixelRatio || 1
+    let W = window.innerWidth
+    let H = window.innerHeight
 
-  useEffect(() => {
-    if (phase < 2) return
-    let id = 0
-    const interval = setInterval(() => {
-      const newFragment = {
-        id: id++,
-        text: CODE_FRAGMENTS[Math.floor(Math.random() * CODE_FRAGMENTS.length)],
-        x: Math.random() * 80 + 5,
-        y: Math.random() * 80 + 5,
-        opacity: Math.random() * 0.6 + 0.2,
+    const resize = () => {
+      W = window.innerWidth
+      H = window.innerHeight
+      canvas.width = W * dpr
+      canvas.height = H * dpr
+      canvas.style.width = `${W}px`
+      canvas.style.height = `${H}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    /* --- Stars --- */
+    const STAR_COUNT = 400
+    const MAX_DEPTH = 1500
+    const stars: Star[] = []
+
+    const resetStar = (s: Star, spread: boolean) => {
+      s.x = (Math.random() - 0.5) * W * 3
+      s.y = (Math.random() - 0.5) * H * 3
+      s.z = spread ? Math.random() * MAX_DEPTH : MAX_DEPTH + Math.random() * 200
+      s.size = Math.random() * 1.8 + 0.4
+      s.alpha = Math.random() * 0.5 + 0.15
+      s.trail = []
+    }
+
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const s: Star = { x: 0, y: 0, z: 0, size: 1, alpha: 0.3, trail: [] }
+      resetStar(s, true)
+      stars.push(s)
+    }
+
+    /* --- Code particles (fly through like stars) --- */
+    const CODE_COUNT = 40
+    const codeParticles: CodeParticle[] = []
+
+    const resetCode = (p: CodeParticle, spread: boolean) => {
+      p.x = (Math.random() - 0.5) * W * 2.5
+      p.y = (Math.random() - 0.5) * H * 2.5
+      p.z = spread ? Math.random() * MAX_DEPTH : MAX_DEPTH + Math.random() * 100
+      p.text = CODE_FRAGMENTS[Math.floor(Math.random() * CODE_FRAGMENTS.length)]
+      p.alpha = Math.random() * 0.5 + 0.25
+    }
+
+    for (let i = 0; i < CODE_COUNT; i++) {
+      const p: CodeParticle = { x: 0, y: 0, z: 0, text: '', alpha: 0.2 }
+      resetCode(p, true)
+      codeParticles.push(p)
+    }
+
+    /* --- Animation loop --- */
+    const animate = () => {
+      const t = intensityRef.current // 0 → 1 unified intensity
+      if (t < 0) return // stopped
+
+      const cxH = W / 2
+      const cyH = H / 2
+
+      ctx.clearRect(0, 0, W, H)
+
+      // Speed: exponential ramp — slow drift → building → hyperspace
+      const ease = t * t * t
+      const speed = 0.4 + ease * 65
+
+      const maxTrailLen = speed > 2 ? Math.floor(2 + t * 20) : 0
+
+      /* === Stars === */
+      for (const s of stars) {
+        s.z -= speed
+
+        if (s.z <= 0) { resetStar(s, false); continue }
+
+        const factor = 300 / (s.z + 0.1)
+        const sx = s.x * factor + cxH
+        const sy = s.y * factor + cyH
+
+        if (sx < -300 || sx > W + 300 || sy < -300 || sy > H + 300) continue
+
+        const depthRatio = 1 - s.z / MAX_DEPTH
+        const brightness = Math.min(depthRatio * 1.6, 1)
+        const alpha = s.alpha * brightness
+
+        if (maxTrailLen > 0) {
+          s.trail.push({ sx, sy })
+          if (s.trail.length > maxTrailLen) s.trail.shift()
+        }
+
+        if (speed > 2 && s.trail.length > 1) {
+          const trail = s.trail
+          const thickness = Math.min(s.size * (speed / 12), 4)
+
+          // chromatic trail — red/blue split increases with intensity
+          const chromOffset = t * 3
+
+          for (let i = 1; i < trail.length; i++) {
+            const frac = i / trail.length
+            const lineAlpha = alpha * frac * 0.7
+
+            // Main white streak
+            ctx.beginPath()
+            ctx.moveTo(trail[i - 1].sx, trail[i - 1].sy)
+            ctx.lineTo(trail[i].sx, trail[i].sy)
+            ctx.lineWidth = thickness * (0.15 + frac * 0.85)
+            ctx.strokeStyle = `rgba(255,255,255,${lineAlpha})`
+            ctx.stroke()
+
+            // Chromatic aberration streaks
+            if (t > 0.3) {
+              const chromAlpha = lineAlpha * (t - 0.3) * 1.4
+              // Red channel offset
+              ctx.beginPath()
+              ctx.moveTo(trail[i - 1].sx + chromOffset, trail[i - 1].sy)
+              ctx.lineTo(trail[i].sx + chromOffset, trail[i].sy)
+              ctx.lineWidth = thickness * (0.1 + frac * 0.5)
+              ctx.strokeStyle = `rgba(255,60,60,${chromAlpha})`
+              ctx.stroke()
+              // Blue channel offset
+              ctx.beginPath()
+              ctx.moveTo(trail[i - 1].sx - chromOffset, trail[i - 1].sy)
+              ctx.lineTo(trail[i].sx - chromOffset, trail[i].sy)
+              ctx.lineWidth = thickness * (0.1 + frac * 0.5)
+              ctx.strokeStyle = `rgba(60,120,255,${chromAlpha})`
+              ctx.stroke()
+            }
+          }
+
+          // Bright head
+          ctx.beginPath()
+          ctx.arc(sx, sy, thickness * 0.8, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(255,255,255,${Math.min(alpha * 1.5, 1)})`
+          ctx.fill()
+        } else {
+          // Slow: dots with subtle twinkle
+          const twinkle = 0.7 + Math.sin(performance.now() * 0.003 + s.x) * 0.3
+          const dotSize = s.size * (0.4 + depthRatio * 1.3)
+          ctx.beginPath()
+          ctx.arc(sx, sy, dotSize, 0, Math.PI * 2)
+          ctx.fillStyle = `rgba(255,255,255,${alpha * twinkle})`
+          ctx.fill()
+        }
       }
-      setFragments(prev => [...prev.slice(-14), newFragment])
-    }, 120)
-    return () => clearInterval(interval)
-  }, [phase])
+
+      /* === Code particles flying through === */
+      if (t > 0.05) {
+        ctx.textAlign = 'left'
+
+        for (const p of codeParticles) {
+          p.z -= speed * 0.8
+
+          if (p.z <= 0) { resetCode(p, false); continue }
+
+          const factor = 300 / (p.z + 0.1)
+          const sx = p.x * factor + cxH
+          const sy = p.y * factor + cyH
+
+          if (sx < -500 || sx > W + 500 || sy < -200 || sy > H + 200) continue
+
+          const depthRatio = 1 - p.z / MAX_DEPTH
+          // Font scales up as particles get closer
+          const fontSize = Math.max(10, 11 + depthRatio * 16)
+          ctx.font = `${fontSize}px "Space Mono", monospace`
+
+          const codeAlpha = p.alpha * depthRatio * Math.min(t * 4, 1)
+
+          if (codeAlpha < 0.02) continue
+
+          // Chromatic split on code text — stronger offset
+          const offset = t * 4
+          if (t > 0.2) {
+            const chromStrength = Math.min((t - 0.2) * 1.5, 1)
+            ctx.fillStyle = `rgba(255,50,50,${codeAlpha * 0.5 * chromStrength})`
+            ctx.fillText(p.text, sx + offset, sy)
+            ctx.fillStyle = `rgba(50,110,255,${codeAlpha * 0.5 * chromStrength})`
+            ctx.fillText(p.text, sx - offset, sy)
+          }
+
+          ctx.fillStyle = `rgba(255,255,255,${codeAlpha})`
+          ctx.fillText(p.text, sx, sy)
+        }
+      }
+
+      /* === Center glow — builds in back half === */
+      if (t > 0.35) {
+        const glowT = (t - 0.35) / 0.65
+        const glowRadius = 60 + glowT * glowT * 200
+        const gradient = ctx.createRadialGradient(cxH, cyH, 0, cxH, cyH, glowRadius)
+        gradient.addColorStop(0, `rgba(255,255,255,${glowT * 0.5})`)
+        gradient.addColorStop(0.2, `rgba(200,220,255,${glowT * 0.15})`)
+        gradient.addColorStop(1, 'rgba(255,255,255,0)')
+        ctx.beginPath()
+        ctx.arc(cxH, cyH, glowRadius, 0, Math.PI * 2)
+        ctx.fillStyle = gradient
+        ctx.fill()
+      }
+
+      /* Radial speed lines removed */
+
+      animRef.current = requestAnimationFrame(animate)
+    }
+
+    animRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      cancelAnimationFrame(animRef.current)
+      window.removeEventListener('resize', resize)
+    }
+  }, [])
+
+  return <canvas ref={canvasRef} className="warp-canvas" />
+}
+
+/* ────────────────────────────────────────────
+   GLITCH TEXT — name that corrupts with warp
+   ──────────────────────────────────────────── */
+
+function GlitchName({ intensity }: { intensity: number }) {
+  const [glitchedFirst, setGlitchedFirst] = useState('DUSTEN')
+  const [glitchedLast, setGlitchedLast] = useState('PETERSON')
+  const [sliceOffset, setSliceOffset] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(null)
 
   useEffect(() => {
-    if (phase < 3) return
-    const interval = setInterval(() => {
-      setBpm(prev => Math.min(prev + 2, 180))
-    }, 60)
-    return () => clearInterval(interval)
-  }, [phase])
+    if (intensity < 0.05) return
 
-  useEffect(() => {
-    if (phase < 2) return
-    let id = 0
-    const interval = setInterval(() => {
-      setGlitchBars(prev => [
-        ...prev.slice(-6),
-        { id: id++, y: Math.random() * 100, width: Math.random() * 60 + 20, delay: Math.random() * 0.1 },
-      ])
-    }, 200)
-    return () => clearInterval(interval)
-  }, [phase])
+    const baseFirst = 'DUSTEN'
+    const baseLast = 'PETERSON'
+
+    // Glitch faster and harder as intensity rises
+    const freq = Math.max(16, 80 - intensity * 65)
+
+    intervalRef.current = setInterval(() => {
+      // Much more aggressive corruption curve
+      const corruptionChance = Math.min(intensity * intensity * 1.2, 0.85)
+
+      const corrupt = (str: string) =>
+        str
+          .split('')
+          .map((ch) =>
+            Math.random() < corruptionChance
+              ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]
+              : ch,
+          )
+          .join('')
+
+      setGlitchedFirst(corrupt(baseFirst))
+      setGlitchedLast(corrupt(baseLast))
+
+      // Random horizontal slice displacement
+      if (intensity > 0.2 && Math.random() < intensity * 0.7) {
+        setSliceOffset((Math.random() - 0.5) * intensity * 60)
+      } else {
+        setSliceOffset(0)
+      }
+    }, freq)
+
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [intensity])
+
+  // Much bigger chromatic split
+  const chromX = intensity * 18
+  const chromY = intensity * 8
+
+  const visible = intensity > 0.02
+
+  // Horizontal slice on individual lines
+  const firstSlice = intensity > 0.3 ? sliceOffset * 0.7 : 0
+  const lastSlice = intensity > 0.3 ? -sliceOffset : 0
 
   return (
-    <div className={`intro ${phase >= 4 ? 'intro--flash' : ''}`} onClick={onComplete}>
-      {phase >= 1 && (
-        <div className="intro-scanlines" style={{ backgroundPositionY: `${scanOffset}px` }} />
-      )}
+    <div
+      className="glitch-name-wrap"
+      style={{ opacity: visible ? 1 : 0 }}
+    >
+      {/* Red ghost — big offset */}
+      <div
+        className="glitch-name glitch-name--red"
+        style={{
+          transform: `translate(${chromX}px, ${-chromY}px)`,
+          opacity: Math.min(intensity * 2, 0.8),
+        }}
+      >
+        <span className="glitch-name-line" style={{ transform: `translateX(${firstSlice * 0.5}px)` }}>{glitchedFirst}</span>
+        <span className="glitch-name-line" style={{ transform: `translateX(${lastSlice * 0.5}px)` }}>{glitchedLast}</span>
+      </div>
 
-      {phase >= 2 && glitchBars.map(bar => (
-        <div
-          key={bar.id}
-          className="intro-glitch-bar"
-          style={{
-            top: `${bar.y}%`,
-            width: `${bar.width}%`,
-            left: `${(100 - bar.width) * Math.random()}%`,
-          }}
-        />
-      ))}
+      {/* Blue ghost — big offset opposite */}
+      <div
+        className="glitch-name glitch-name--blue"
+        style={{
+          transform: `translate(${-chromX}px, ${chromY}px)`,
+          opacity: Math.min(intensity * 2, 0.8),
+        }}
+      >
+        <span className="glitch-name-line" style={{ transform: `translateX(${-firstSlice * 0.5}px)` }}>{glitchedFirst}</span>
+        <span className="glitch-name-line" style={{ transform: `translateX(${-lastSlice * 0.5}px)` }}>{glitchedLast}</span>
+      </div>
 
-      {phase >= 2 && fragments.map(f => (
-        <span
-          key={f.id}
-          className="intro-code"
-          style={{
-            left: `${f.x}%`,
-            top: `${f.y}%`,
-            opacity: f.opacity,
-          }}
-        >
-          {f.text}
-        </span>
-      ))}
-
-      {phase >= 3 && (
-        <div className="intro-bpm">
-          <span className="intro-bpm-num">{bpm}</span>
-          <span className="intro-bpm-label">BPM</span>
-        </div>
-      )}
-
-      {phase >= 3 && <div className="intro-pulse" />}
-
-      {phase >= 1 && phase < 4 && (
-        <div className="intro-skip">click to skip</div>
-      )}
+      {/* Main white text with slice displacement */}
+      <div className="glitch-name glitch-name--main">
+        <span className="glitch-name-line" style={{ transform: `translateX(${firstSlice}px)` }}>{glitchedFirst}</span>
+        <span className="glitch-name-line" style={{ transform: `translateX(${lastSlice}px)` }}>{glitchedLast}</span>
+      </div>
     </div>
   )
 }
 
+/* ────────────────────────────────────────────
+   GLITCH BARS — horizontal noise bands
+   Scale frequency & opacity with intensity
+   ──────────────────────────────────────────── */
+
+function GlitchBars({ intensity }: { intensity: number }) {
+  const [bars, setBars] = useState<Array<{
+    id: number; y: number; w: number; x: number; h: number
+  }>>([])
+  const idRef = useRef(0)
+
+  useEffect(() => {
+    if (intensity < 0.1) return
+
+    // Spawn faster as intensity rises
+    const freq = Math.max(30, 200 - intensity * 170)
+    const maxBars = Math.floor(3 + intensity * 10)
+
+    const interval = setInterval(() => {
+      const count = Math.floor(1 + intensity * 3)
+      const newBars = Array.from({ length: count }, () => ({
+        id: idRef.current++,
+        y: Math.random() * 100,
+        w: Math.random() * 50 + 10 + intensity * 30,
+        x: Math.random() * 60,
+        h: Math.random() < intensity * 0.5 ? Math.random() * 6 + 2 : 2,
+      }))
+      setBars((prev) => [...prev.slice(-maxBars), ...newBars])
+    }, freq)
+
+    return () => clearInterval(interval)
+  }, [intensity])
+
+  return (
+    <>
+      {bars.map((bar) => (
+        <div
+          key={bar.id}
+          className="glitch-bar"
+          style={{
+            top: `${bar.y}%`,
+            left: `${bar.x}%`,
+            width: `${bar.w}%`,
+            height: `${bar.h}px`,
+            opacity: 0.1 + intensity * 0.5,
+          }}
+        />
+      ))}
+    </>
+  )
+}
+
+/* ────────────────────────────────────────────
+   BPM COUNTER — pulses harder with intensity
+   ──────────────────────────────────────────── */
+
+function BpmCounter({ intensity }: { intensity: number }) {
+  const [bpm, setBpm] = useState(128)
+  const intensityRef = useRef(intensity)
+  intensityRef.current = intensity
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const t = intensityRef.current
+      if (t < 0.3) return
+      const step = t > 0.7 ? 3 : t > 0.5 ? 2 : 1
+      setBpm((prev) => Math.min(prev + step, 180))
+    }, 30)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (intensity < 0.3) return null
+
+  const pulseSpeed = Math.max(0.06, 0.15 - intensity * 0.09)
+  const scale = 0.95 + intensity * 0.1
+
+  return (
+    <div className="bpm-counter" style={{ transform: `scale(${scale})` }}>
+      <span
+        className="bpm-num"
+        style={{
+          animationDuration: `${pulseSpeed}s`,
+          textShadow: `0 0 ${intensity * 40}px rgba(255,255,255,${intensity * 0.8})`,
+        }}
+      >
+        {bpm}
+      </span>
+      <span className="bpm-label">BPM</span>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────
+   INTRO — master orchestrator
+   Single intensity curve drives everything
+   ──────────────────────────────────────────── */
+
+function Intro({ onComplete }: { onComplete: () => void }) {
+  const [intensity, setIntensity] = useState(0)
+  const [phase, setPhase] = useState<'warp' | 'flash' | 'done'>('warp')
+  const startRef = useRef(0)
+  const animRef = useRef(0)
+
+  useEffect(() => {
+    startRef.current = performance.now()
+
+    const TOTAL_WARP = 4800  // ms of warp buildup
+    const FLASH_AT = 4800    // when flash triggers
+    const COMPLETE_AT = 5400 // when site appears
+
+    const tick = () => {
+      const elapsed = performance.now() - startRef.current
+
+      if (elapsed < TOTAL_WARP) {
+        // Smooth intensity curve: slow start → accelerating → max
+        const t = elapsed / TOTAL_WARP
+        // Custom easing: slow in first 30%, rapid 30-80%, plateau 80-100%
+        let i: number
+        if (t < 0.3) {
+          i = (t / 0.3) * 0.15 // 0 → 0.15 slowly
+        } else if (t < 0.8) {
+          const mid = (t - 0.3) / 0.5
+          i = 0.15 + mid * mid * 0.65 // 0.15 → 0.8 accelerating
+        } else {
+          const end = (t - 0.8) / 0.2
+          i = 0.8 + end * 0.2 // 0.8 → 1.0 final push
+        }
+        setIntensity(i)
+        animRef.current = requestAnimationFrame(tick)
+      } else if (elapsed < FLASH_AT + 100) {
+        setIntensity(1)
+        setPhase('flash')
+        animRef.current = requestAnimationFrame(tick)
+      } else if (elapsed >= COMPLETE_AT) {
+        setIntensity(-1)
+        setPhase('done')
+        onComplete()
+      } else {
+        animRef.current = requestAnimationFrame(tick)
+      }
+    }
+
+    animRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(animRef.current)
+  }, [onComplete])
+
+  const handleSkip = useCallback(() => {
+    cancelAnimationFrame(animRef.current)
+    setIntensity(-1)
+    setPhase('done')
+    onComplete()
+  }, [onComplete])
+
+  if (phase === 'done') return null
+
+  // No screen shake — it exposes the background behind the intro
+  const shakeX = 0
+  const shakeY = 0
+
+  // Scanline opacity intensifies
+  const scanOpacity = Math.min(intensity * 0.8, 0.5)
+
+  return (
+    <div
+      className={`intro ${phase === 'flash' ? 'intro--flash' : ''}`}
+      onClick={handleSkip}
+      style={{
+        transform: `translate(${shakeX}px, ${shakeY}px)`,
+      }}
+    >
+      {/* Star warp + code particles — all on canvas */}
+      <WarpCanvas intensity={intensity} />
+
+      {/* Scanlines — opacity scales with intensity */}
+      <div
+        className="intro-scanlines"
+        style={{ opacity: scanOpacity }}
+      />
+
+      {/* Glitch bars */}
+      <GlitchBars intensity={intensity} />
+
+      {/* Name hidden for now */}
+
+      {/* BPM counter */}
+      <BpmCounter intensity={intensity} />
+
+      {/* Noise texture overlay */}
+      <div
+        className="intro-noise"
+        style={{ opacity: 0.03 + intensity * 0.08 }}
+      />
+
+      {/* Skip hint */}
+      <div className="intro-skip">click to skip</div>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────
+   MAIN SITE (unchanged layout)
+   ──────────────────────────────────────────── */
+
 function BracketLogo() {
   return (
     <svg className="topline-logo" viewBox="0 0 64 64" width="28" height="28" aria-label="DP logo">
-      <path d="M14 14 L24 14 L24 20 L20 20 L20 44 L24 44 L24 50 L14 50 Z" fill="currentColor"/>
-      <path d="M50 14 L40 14 L40 20 L44 20 L44 44 L40 44 L40 50 L50 50 Z" fill="currentColor"/>
-      <rect x="29" y="29" width="6" height="6" fill="currentColor"/>
+      <path d="M14 14 L24 14 L24 20 L20 20 L20 44 L24 44 L24 50 L14 50 Z" fill="currentColor" />
+      <path d="M50 14 L40 14 L40 20 L44 20 L44 44 L40 44 L40 50 L50 50 Z" fill="currentColor" />
+      <rect x="29" y="29" width="6" height="6" fill="currentColor" />
     </svg>
   )
 }
