@@ -1,0 +1,215 @@
+/* ================================================
+   INTRO — all layers sync to intensity
+   ================================================ */
+
+.intro {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 9999;
+  overflow: hidden;
+  cursor: pointer;
+  will-change: transform;
+}
+
+.intro--flash {
+  animation: flash-explode 0.6s ease-out forwards;
+}
+
+@keyframes flash-explode {
+  0% {
+    background: #000;
+    filter: brightness(1);
+  }
+  15% {
+    background: #fff;
+    filter: brightness(3);
+  }
+  40% {
+    background: #fff;
+    filter: brightness(2);
+  }
+  100% {
+    background: #e8e4dc;
+    filter: brightness(1);
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.warp-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.intro-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(255, 255, 255, 0.04) 2px,
+    rgba(255, 255, 255, 0.04) 4px
+  );
+  mix-blend-mode: overlay;
+}
+
+.intro-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.6'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+.glitch-bar {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.25);
+  z-index: 6;
+  pointer-events: none;
+  animation: glitch-bar-life 0.2s ease-out forwards;
+  mix-blend-mode: screen;
+}
+
+@keyframes glitch-bar-life {
+  0% {
+    opacity: 1;
+    transform: scaleX(1) translateX(0);
+  }
+  50% {
+    transform: scaleX(1.1) translateX(2px);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0.2) translateX(-10px);
+  }
+}
+
+.glitch-name-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.glitch-name {
+  position: absolute;
+  text-align: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(5rem, 18vw, 16rem);
+  line-height: 0.88;
+  letter-spacing: -0.01em;
+  will-change: transform;
+}
+
+.glitch-name-line {
+  display: block;
+  will-change: transform;
+  transition: none;
+}
+
+.glitch-name--main {
+  color: #fff;
+  text-shadow:
+    0 0 30px rgba(255, 255, 255, 0.5),
+    0 0 80px rgba(255, 255, 255, 0.2),
+    0 0 120px rgba(255, 255, 255, 0.05);
+}
+
+.glitch-name--red {
+  color: #ff2020;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.glitch-name--blue {
+  color: #2060ff;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.bpm-counter {
+  position: absolute;
+  bottom: 14%;
+  right: 8%;
+  z-index: 20;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  animation: bpm-enter 0.3s ease both;
+  will-change: transform;
+}
+
+.bpm-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4rem, 12vw, 10rem);
+  color: #fff;
+  line-height: 1;
+  animation: bpm-throb 0.12s ease infinite alternate;
+}
+
+.bpm-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+@keyframes bpm-enter {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bpm-throb {
+  from { opacity: 0.65; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
+.intro-skip {
+  position: absolute;
+  bottom: 1.5rem;
+  width: 100%;
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  z-index: 25;
+  animation: fade-in 1.2s ease 0.8s both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- responsive ---- */
+@media (max-width: 768px) {
+  .bpm-counter {
+    right: 5%;
+    bottom: 20%;
+  }
+
+  .glitch-name {
+    font-size: clamp(3.5rem, 14vw, 8rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .glitch-name {
+    font-size: clamp(3rem, 13vw, 5rem);
+  }
+}
