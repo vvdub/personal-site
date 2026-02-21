@@ -23,8 +23,8 @@ const CODE_FRAGMENTS = [
   '{ "status": "live" }',
 ]
 
-/* glitch alphabet for character corruption */
-const GLITCH_CHARS = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`01'
+/* glitch alphabet — techno/terminal aesthetic */
+const GLITCH_CHARS = '01!@#$_-=|;:<>/~\u2588\u2593\u2592\u2591\u25A0\u25B6\u00BB\u00AB'
 
 /* ────────────────────────────────────────────
    STAR WARP + CODE WARP — unified canvas
@@ -200,9 +200,10 @@ function WarpCanvas({ intensity }: { intensity: number }) {
         }
       }
 
-      /* === Code particles flying through === */
-      if (t > 0.05) {
+      /* === Code particles — techno glitch style === */
+      {
         ctx.textAlign = 'left'
+        const now = performance.now()
 
         for (const p of codeParticles) {
           p.z -= speed * 0.8
@@ -216,26 +217,41 @@ function WarpCanvas({ intensity }: { intensity: number }) {
           if (sx < -500 || sx > W + 500 || sy < -200 || sy > H + 200) continue
 
           const depthRatio = 1 - p.z / MAX_DEPTH
-          // Font scales up as particles get closer
-          const fontSize = Math.max(10, 11 + depthRatio * 16)
+          // Smaller font — tight techno aesthetic
+          const fontSize = Math.max(8, 9 + depthRatio * 8)
           ctx.font = `${fontSize}px "Space Mono", monospace`
 
-          const codeAlpha = p.alpha * depthRatio * Math.min(t * 4, 1)
+          // Techno strobe: random flicker at high intensity
+          const flicker = t > 0.4 && Math.random() < t * 0.15 ? 0 : 1
+          const codeAlpha = p.alpha * depthRatio * flicker
 
           if (codeAlpha < 0.02) continue
 
-          // Chromatic split on code text — stronger offset
-          const offset = t * 4
+          // Corrupt the text in-flight from the start — techno glitch
+          const corruptChance = 0.08 + t * t * 0.5
+          const displayText = p.text
+            .split('')
+            .map(ch => Math.random() < corruptChance
+              ? GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)]
+              : ch)
+            .join('')
+
+          // Jitter computed once, applied to all layers
+          const jitter = t > 0.3 ? (Math.sin(now * 0.05 + p.z) > 0.7 ? (Math.random() - 0.5) * t * 12 : 0) : 0
+          const drawX = sx + jitter
+
+          // Chromatic split — same text, same jitter base
+          const chromOff = t * 3
           if (t > 0.2) {
             const chromStrength = Math.min((t - 0.2) * 1.5, 1)
             ctx.fillStyle = `rgba(255,50,50,${codeAlpha * 0.5 * chromStrength})`
-            ctx.fillText(p.text, sx + offset, sy)
+            ctx.fillText(displayText, drawX + chromOff, sy)
             ctx.fillStyle = `rgba(50,110,255,${codeAlpha * 0.5 * chromStrength})`
-            ctx.fillText(p.text, sx - offset, sy)
+            ctx.fillText(displayText, drawX - chromOff, sy)
           }
 
           ctx.fillStyle = `rgba(255,255,255,${codeAlpha})`
-          ctx.fillText(p.text, sx, sy)
+          ctx.fillText(displayText, drawX, sy)
         }
       }
 
@@ -546,7 +562,8 @@ function Intro({ onComplete }: { onComplete: () => void }) {
       {/* Glitch bars */}
       <GlitchBars intensity={intensity} />
 
-      {/* Name hidden for now */}
+      {/* Center name — the hero element */}
+      <GlitchName intensity={intensity} />
 
       {/* BPM counter */}
       <BpmCounter intensity={intensity} />
