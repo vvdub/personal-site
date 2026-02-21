@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#0a0a0a"/>
+  <!-- Minimal geometric mark: two interlocking brackets forming a container -->
+  <!-- Left bracket -->
+  <path d="M14 14 L24 14 L24 20 L20 20 L20 44 L24 44 L24 50 L14 50 Z" fill="#f0ece4"/>
+  <!-- Right bracket -->
+  <path d="M50 14 L40 14 L40 20 L44 20 L44 44 L40 44 L40 50 L50 50 Z" fill="#f0ece4"/>
+  <!-- Center dot -->
+  <rect x="29" y="29" width="6" height="6" fill="#f0ece4"/>
+</svg>
