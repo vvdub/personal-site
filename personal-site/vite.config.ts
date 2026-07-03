@@ -7,5 +7,9 @@ export default defineConfig({
   base: '/',
   build: {
     outDir: '../docs',
+    // docs/ lives outside the project root, so Vite won't clear it unless
+    // we opt in. CNAME/.nojekyll/favicon are sourced from public/, so a
+    // full wipe is safe and prevents stale hashed bundles from piling up.
+    emptyOutDir: true,
   },
 })
