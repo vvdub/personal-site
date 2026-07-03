@@ -6,7 +6,10 @@ export function WarpCanvas({ intensity }: { intensity: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animRef = useRef<number>(0)
   const intensityRef = useRef(intensity)
-  intensityRef.current = intensity
+
+  useEffect(() => {
+    intensityRef.current = intensity
+  }, [intensity])
 
   useEffect(() => {
     const canvas = canvasRef.current

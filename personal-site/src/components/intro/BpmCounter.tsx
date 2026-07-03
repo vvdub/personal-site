@@ -4,7 +4,10 @@ import { BPM_INITIAL, BPM_MAX } from '../../constants'
 export function BpmCounter({ intensity }: { intensity: number }) {
   const [bpm, setBpm] = useState(BPM_INITIAL)
   const intensityRef = useRef(intensity)
-  intensityRef.current = intensity
+
+  useEffect(() => {
+    intensityRef.current = intensity
+  }, [intensity])
 
   useEffect(() => {
     const interval = setInterval(() => {

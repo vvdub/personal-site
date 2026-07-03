@@ -42,13 +42,27 @@
   border-bottom: 1px solid #0a0a0a;
 }
 
+.topline-logo-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  line-height: 0;
+  cursor: pointer;
+}
+
 .topline-logo {
   color: #0a0a0a;
   transition: transform 0.2s ease;
 }
 
-.topline-logo:hover {
+.topline-logo-btn:hover .topline-logo {
   transform: scale(1.1);
+}
+
+.topline-logo-btn:focus-visible,
+.links a:focus-visible {
+  outline: 2px solid #0a0a0a;
+  outline-offset: 4px;
 }
 
 .topline-label {
@@ -82,6 +96,34 @@
   color: #0a0a0a;
   position: relative;
   cursor: default;
+}
+
+/* Ink plates — magenta and cyan sit dead-on behind the black plate,
+   invisible until a ghost burst slips them out of register */
+.name-plate {
+  display: block;
+}
+
+.name-plate--magenta,
+.name-plate--cyan {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.name-plate--magenta {
+  color: #e6007e;
+}
+
+.name-plate--cyan {
+  color: #0092d0;
+}
+
+.name--ghost .name-plate--magenta,
+.name--ghost .name-plate--cyan {
+  opacity: 0.85;
 }
 
 /* Hover on name — offset second line like misregistered print */
@@ -210,6 +252,8 @@
 .bottomline {
   display: flex;
   justify-content: flex-end;
+  align-items: baseline;
+  gap: 1.5rem;
   padding-top: 2rem;
   border-top: 1px solid #0a0a0a;
 }
@@ -220,6 +264,18 @@
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: #999;
+}
+
+/* ---- reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  .page--visible .name-line,
+  .page--visible .rule,
+  .page--visible .meta,
+  .page--visible .links {
+    animation-duration: 0.01ms;
+    animation-delay: 0s;
+  }
 }
 
 /* ---- responsive ---- */

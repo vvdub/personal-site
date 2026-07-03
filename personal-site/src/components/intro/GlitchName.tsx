@@ -6,7 +6,10 @@ export function GlitchName({ intensity }: { intensity: number }) {
   const [glitchedLast, setGlitchedLast] = useState('PETERSON')
   const [sliceOffset, setSliceOffset] = useState(0)
   const intensityRef = useRef(intensity)
-  intensityRef.current = intensity
+
+  useEffect(() => {
+    intensityRef.current = intensity
+  }, [intensity])
 
   useEffect(() => {
     const baseFirst = 'DUSTEN'

@@ -1,11 +1,10 @@
+import { GhostName } from './GhostName'
+
 export function MainContent() {
   return (
     <main className="content">
       <div className="name-block">
-        <h1 className="name" data-text="Dusten Peterson">
-          <span className="name-line">Dusten</span>
-          <span className="name-line">Peterson</span>
-        </h1>
+        <GhostName />
       </div>
 
       <div className="rule" />
